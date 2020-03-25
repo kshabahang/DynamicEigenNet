@@ -25,11 +25,36 @@ def load_csr(fpath, shape, dtype=np.float64, itype=np.int32):
 
 
 if __name__ == "__main__":
+    f = open("../rsc/bundles.pkl","rb")
+    bundles = pickle.load(f)
+    f.close()
 
-    N =300
+    vocab = []
+    wf = {}
+    sents = []
+    for i in range(len(bundles)):
+        sent = ' '.join(bundles[i][0]).lower().split()
+        for j in range(len(sent)):
+            w = sent[j]
+            if w not in vocab:
+                vocab.append(w)
+                wf[w] = 1
+            else:
+                wf[w] += 1
+   
+    vocab_trunc = []
+    for i in range(len(vocab)):
+        if wf[vocab[i]] > 1:
+            vocab_trunc.append(vocab[i])
+    vocab = vocab_trunc
+    V = len(vocab)
+    I = {vocab[i]:i for i in range(V)}
+
+
+
+    N =V
 
     K = 2
-
     
     hparams = {"bank_labels":["t-{}".format(i) for i in range(K)],
                "eps":0.001, 
@@ -47,34 +72,41 @@ if __name__ == "__main__":
                "gpu":False,
                "localist":True,
                "distributed":False,
-               "explicit":True}
-    ANet = AssociativeNet(hparams)
-
-    thetas = [0.25, 0.5, 1]
-    scores= []
-    for theta in thetas:
-        NIter = 10000
-        max_eig = []
-        pbar = ProgressBar(maxval = NIter).start()
-        for i in range(NIter):
-            x = np.zeros(N*K)
-            for k in range(K):
-                w = np.random.randint(N)
-                x[w] += 1
-            x = x/np.linalg.norm(x)
-            ANet.W[:, :] += np.outer(x,x)*(theta  -  ANet.W)
-            ei, ev = np.linalg.eig(ANet.W)
-            eig_max = max(abs(ei))
-            max_eig.append(eig_max)
-            pbar.update(i+1)
-#        print(eig_max)
-        scores.append(max_eig)
-
-    fig = plt.figure()
-    for i in range(len(thetas)):
-        plt.plot(scores[i], label = thetas[i])
-    plt.legend()
-    fig.show()
+               "explicit":False}
+#    ANet = AssociativeNet(hparams)
+#    
+#    f = open("../rsc/TASA/vocab.txt", "r")
+#    vocab = f.readlines()
+#    ANet.vocab = [vocab[i].strip() for i in range(len(vocab))]
+#    f.close()
+#    ANet.I = {ANet.vocab[i]:i for i in range(len(vocab))}
+#    
+#
+#    thetas = [0.25, 0.5, 1]
+#    scores= []
+#    for theta in thetas:
+#        NIter = 10000
+#        max_eig = []
+#        pbar = ProgressBar(maxval = NIter).start()
+#        for i in range(NIter):
+#            x = np.zeros(N*K)
+#            for k in range(K):
+#                w = np.random.randint(N)
+#                x[w] += 1
+#            x = x/np.linalg.norm(x)
+#            ANet.W[:, :] += np.outer(x,x)*(theta  -  ANet.W)
+#            ei, ev = np.linalg.eig(ANet.W)
+#            eig_max = max(abs(ei))
+#            max_eig.append(eig_max)
+#            pbar.update(i+1)
+##        print(eig_max)
+#        scores.append(max_eig)
+#
+#    fig = plt.figure()
+#    for i in range(len(thetas)):
+#        plt.plot(scores[i], label = thetas[i])
+#    plt.legend()
+#    fig.show()
 
         
         
