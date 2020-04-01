@@ -1,6 +1,6 @@
 import sys, os
 from AssociativeNet import *
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 #plt.ion()
 from progressbar import ProgressBar
 
